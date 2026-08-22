@@ -10,7 +10,7 @@
 <header class="nav">
   <div class="brand"><div class="logo">W</div><div><b>WAITLIST BOT</b><small>Premium Edition</small></div></div>
   <nav><a href="#funciones">Funciones</a><a href="#tutorial">Tutorial</a><a href="#seguridad">Seguridad</a><a href="#discord">Discord</a></nav>
-  <a class="mini" href="https://github.com/margaritaharo7-cloud/Waitlist-Bot/releases/tag/v1.1.1" target="_blank">Descargar</a>
+  <a class="mini js-latest-release-link" href="https://github.com/margaritaharo7-cloud/Waitlist-Bot/releases/latest" target="_blank">Descargar</a>
 </header>
 
 <main>
@@ -20,7 +20,7 @@
     <h1>Entra a tus waitlists <span>más rápido.</span></h1>
     <p>Waitlist Bot monitorea el canal que configures y detecta botones como <b>Join</b> o <b>Join Queue</b>. El modo SPEED prioriza <b>Join Queue</b> para reaccionar más rápido cuando aparece la cola.</p>
     <div class="actions">
-      <a class="btn primary" href="https://github.com/margaritaharo7-cloud/Waitlist-Bot/releases/tag/v1.1.1" target="_blank">Descargar para Windows</a>
+      <a class="btn primary js-latest-release-link" href="https://github.com/margaritaharo7-cloud/Waitlist-Bot/releases/latest" target="_blank">Descargar para Windows</a>
       <a class="btn secondary" href="#tutorial">Ver tutorial</a>
     </div>
     <div class="meta">Windows 10/11 · Edge + Chrome · Login manual</div>
@@ -80,10 +80,10 @@
 </section>
 
 <section class="section">
-  <span class="pill">CHANGELOG</span><h2>Waitlist Bot v1.1.1</h2>
+  <span class="pill">CHANGELOG</span><h2>Waitlist Bot <span id="latest-version">v1.1.1</span></h2>
   <div class="release">
-    <p><b>Última versión</b></p>
-    <ul>
+    <p><b>Última versión</b> · <span id="release-date">fecha no disponible</span></p>
+    <ul id="release-notes">
       <li>Nueva interfaz tipo dashboard.</li>
       <li>Sistema de perfiles para guardar canales.</li>
       <li>Diagnóstico integrado y logs mejorados.</li>
@@ -116,11 +116,94 @@
 
 <section class="cta">
   <div><small>WAITLIST BOT</small><h2>Listo para tu próxima waitlist.</h2></div>
-  <a class="btn primary" href="https://github.com/margaritaharo7-cloud/Waitlist-Bot/releases/tag/v1.1.1" target="_blank">Descargar ahora</a>
+  <a class="btn primary js-latest-release-link" href="https://github.com/margaritaharo7-cloud/Waitlist-Bot/releases/latest" target="_blank">Descargar ahora</a>
 </section>
 </main>
 
 <footer><b>Waitlist Bot</b><span>Creado por Larry capija · © 2026</span></footer>
+
+<script>
+(() => {
+  const REPO = "margaritaharo7-cloud/Waitlist-Bot";
+  const API_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
+
+  const versionEl = document.getElementById("latest-version");
+  const dateEl = document.getElementById("release-date");
+  const notesEl = document.getElementById("release-notes");
+  const releaseLinks = document.querySelectorAll(".js-latest-release-link");
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function renderReleaseNotes(body) {
+    if (!notesEl || !body || !body.trim()) return;
+
+    // GitHub entrega las notas como Markdown. Para mantener la web simple,
+    // mostramos cada línea útil como un elemento del changelog.
+    const lines = body
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .filter(line => !/^#{1,6}\s/.test(line))
+      .map(line => line.replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, ""))
+      .filter(Boolean)
+      .slice(0, 12);
+
+    if (!lines.length) return;
+
+    notesEl.innerHTML = lines
+      .map(line => `<li>${escapeHtml(line)}</li>`)
+      .join("");
+  }
+
+  async function loadLatestRelease() {
+    try {
+      const response = await fetch(API_URL, {
+        headers: { "Accept": "application/vnd.github+json" },
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub API: ${response.status}`);
+      }
+
+      const release = await response.json();
+
+      if (versionEl && release.tag_name) {
+        versionEl.textContent = release.tag_name;
+      }
+
+      if (dateEl && release.published_at) {
+        dateEl.textContent = new Intl.DateTimeFormat("es-EC", {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        }).format(new Date(release.published_at));
+      }
+
+      if (release.html_url) {
+        releaseLinks.forEach(link => {
+          link.href = release.html_url;
+        });
+      }
+
+      renderReleaseNotes(release.body || "");
+    } catch (error) {
+      // Si GitHub no responde, la web conserva la versión y enlaces de respaldo.
+      console.warn("No se pudo cargar la última release:", error);
+    }
+  }
+
+  loadLatestRelease();
+})();
+</script>
+
 <script src="script.js"></script>
 </body>
 </html>
